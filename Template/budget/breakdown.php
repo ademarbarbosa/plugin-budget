@@ -19,9 +19,9 @@
             <td><?= $this->url->link($this->helper->text->e($record['task_title']), 'TaskViewController', 'show', array('project_id' => $project['id'], 'task_id' => $record['task_id'])) ?></td>
             <td><?= $this->url->link($this->helper->text->e($record['subtask_title']), 'TaskViewController', 'show', array('project_id' => $project['id'], 'task_id' => $record['task_id'])) ?></td>
             <td><?= $this->url->link($this->helper->text->e($record['name'] ?: $record['username']), 'UserViewController', 'show', array('user_id' => $record['user_id'])) ?></td>
-            <td><?= n($record['cost']) ?></td>
-            <td><?= n($record['time_spent']).' '.t('hours') ?></td>
-            <td><?= $this->dt->date($record['start']) ?></td>
+            <td style="text-align: right"><?= n($record['cost']) ?></td>
+            <td style="text-align: right"><?= n($record['time_spent']).' '.t('hours') ?></td>
+            <td style="text-align: right"><?= $this->dt->date($record['start']) ?></td>
         </tr>
         <?php endforeach ?>
     </table>

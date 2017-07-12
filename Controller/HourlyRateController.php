@@ -27,10 +27,12 @@ class HourlyRateController extends BaseController
     {
         $user = $this->getUser();
 
+		$currencyDefault = $this->configModel->get('application_currency', 'USD');
+	
         $this->response->html($this->helper->layout->user('budget:hourlyrate/create', array(
             'rates' => $this->hourlyRate->getAllByUser($user['id']),
             'currencies_list' => $this->currencyModel->getCurrencies(),
-            'values' => $values + array('user_id' => $user['id']),
+            'values' => $values + array('user_id' => $user['id'], 'currency' => $currencyDefault),
             'errors' => $errors,
             'user' => $user,
         )));

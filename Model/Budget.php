@@ -68,7 +68,7 @@ class Budget extends Base
                         SubtaskTimeTrackingModel::TABLE.'.user_id',
                         SubtaskTimeTrackingModel::TABLE.'.subtask_id',
                         SubtaskTimeTrackingModel::TABLE.'.start',
-                        SubtaskTimeTrackingModel::TABLE.'.time_spent',
+                        SubtaskModel::TABLE.'.time_spent',
                         SubtaskModel::TABLE.'.task_id',
                         SubtaskModel::TABLE.'.title AS subtask_title',
                         TaskModel::TABLE.'.title AS task_title',
@@ -83,6 +83,29 @@ class Budget extends Base
                     ->callback(array($this, 'applyUserRate'));
     }
 
+	public function getTaskBreakdown($project_id) {
+		$teste = $this->db
+                    ->table(TaskModel::TABLE)
+                    ->columns(
+                        TaskModel::TABLE.'.id',
+                        TaskModel::TABLE.'.owner_id as user_id',
+                        SubtaskModel::TABLE.'.id as subtask_id',
+                        TaskModel::TABLE.'.date_due as start',
+						TaskModel::TABLE.'.time_spent as time_task_pent',
+                        SubtaskModel::TABLE.'.time_spent',
+                        TaskModel::TABLE.'.id as task_id',
+						SubtaskModel::TABLE.'.title AS subtask_title',
+                        TaskModel::TABLE.'.title AS task_title',
+                        TaskModel::TABLE.'.project_id',
+                        UserModel::TABLE.'.username',
+                        UserModel::TABLE.'.name'
+                    )
+                    ->join(SubtaskModel::TABLE, 'task_id', 'id')
+                    ->join(UserModel::TABLE, 'id', 'owner_id')
+                    ->eq(TaskModel::TABLE.'.project_id', $project_id);
+		return $teste->callback(array($this, 'applyUserRateTask'));
+	}
+	
     /**
      * Gather necessary information to display the budget graph
      *
@@ -95,6 +118,7 @@ class Budget extends Base
         $out = array();
         $in = $this->db->hashtable(self::TABLE)->eq('project_id', $project_id)->gt('amount', 0)->asc('date')->getAll('date', 'amount');
         $time_slots = $this->getSubtaskBreakdown($project_id)->findAll();
+		//$time_slots = $this->getTaskBreakdown($project_id)->findAll();
 
         foreach ($time_slots as $slot) {
             $date = date('Y-m-d', $slot['start']);
@@ -162,6 +186,36 @@ class Budget extends Base
         return $records;
     }
 
+	/**
+     * Filter callback to apply the rate according to the effective date
+     *
+     * @access public
+     * @param  array   $records
+     * @return array
+     */
+    public function applyUserRateTask(array $records)
+    {
+        $rates = $this->hourlyRate->getAllByProject($records[0]['project_id']);
+
+        foreach ($records as &$record) {
+
+            $hourly_price = 0;
+
+            foreach ($rates as $rate) {
+                if ($rate['user_id'] == $record['user_id']) {
+                    $hourly_price = $this->currencyModel->getPrice($rate['currency'], $rate['rate']);
+                    break;
+                }
+            }
+			if ($record['time_spent'] == '' || $record['time_spent'] == '0') {
+				$record['time_spent'] = $record['time_task_pent'];
+			}
+			$record['cost'] = $hourly_price * $record['time_spent'];
+        }
+
+        return $records;
+    }
+	
     /**
      * Add a new budget line in the database
      *

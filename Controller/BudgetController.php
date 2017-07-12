@@ -32,7 +32,8 @@ class BudgetController extends BaseController
             ->setMax(30)
             ->setOrder('start')
             ->setDirection('DESC')
-            ->setQuery($this->budget->getSubtaskBreakdown($project['id']))
+            //->setQuery($this->budget->getSubtaskBreakdown($project['id']))
+			->setQuery($this->budget->getTaskBreakdown($project['id']))
             ->calculate();
 
         $this->response->html($this->helper->layout->project('budget:budget/breakdown', array(
